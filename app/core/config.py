@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Database
+    DATABASE_URL: str | None = None
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
@@ -25,7 +26,20 @@ class Settings(BaseSettings):
     
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}/{self.POSTGRES_DB}"
+        if self.DATABASE_URL:
+            url = self.DATABASE_URL
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            elif url.startswith("postgresql+asyncpg://"):
+                # The app uses synchronous create_engine, so we force psycopg2/default
+                url = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+            return url
+            
+        server = self.POSTGRES_SERVER
+        if server.startswith("https://"):
+            server = server.replace("https://", "")
+            
+        return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{server}/{self.POSTGRES_DB}"
         
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

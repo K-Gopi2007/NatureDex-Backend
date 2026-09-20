@@ -1,6 +1,7 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.api.routes import species, discoveries, auth, users, map, companion
 from app.routes import identify
 from app.core.config import settings
@@ -21,8 +22,14 @@ app = FastAPI(
 def on_startup():
     db = SessionLocal()
     try:
+        # Check if we can connect to the database first
+        db.execute(text("SELECT 1"))
         ProgressionService.seed_achievements(db)
         SeederService.seed_species(db)
+        logging.info("Database seeding completed successfully.")
+    except Exception as e:
+        logging.error(f"Failed to connect to the database or run startup seeds: {e}")
+        logging.error("Continuing startup without seeding. Please check your DATABASE_URL or run database migrations.")
     finally:
         db.close()
 
@@ -45,6 +52,10 @@ app.include_router(companion.router, prefix=f"{settings.API_V1_STR}/companion", 
 app.include_router(identify.router, prefix=f"{settings.API_V1_STR}/identify", tags=["identify"])
 from app.api.routes import contributions
 app.include_router(contributions.router, prefix=f"{settings.API_V1_STR}/contributions", tags=["contributions"])
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 @app.get("/")
 def root():
