@@ -13,6 +13,9 @@ router = APIRouter()
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(user_in: UserCreate, db: SessionDep):
+    if len(user_in.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+        
     user = db.query(User).filter(User.email == user_in.email).first()
     if user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -33,8 +36,15 @@ def register(user_in: UserCreate, db: SessionDep):
     return new_user
 
 
+from fastapi import Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
 @router.post("/login", response_model=Token)
-def login(db: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+@limiter.limit("10/minute")
+def login(request: Request, db: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # Allow login with email or username
     user = db.query(User).filter((User.email == form_data.username) | (User.username == form_data.username)).first()
     if not user or not verify_password(form_data.password, user.hashed_password):

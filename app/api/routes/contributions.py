@@ -16,13 +16,19 @@ def submit_contribution(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    notes = contribution_in.observation_notes or ""
+    if contribution_in.species_name:
+        notes = f"Species: {contribution_in.species_name}\n" + notes
+    if contribution_in.observation_date:
+        notes = f"Date: {contribution_in.observation_date}\n" + notes
+
     contribution = CommunityContribution(
         user_id=current_user.id,
         species_id=contribution_in.species_id,
         image_url=contribution_in.image_url,
         location_lat=contribution_in.location_lat,
         location_lng=contribution_in.location_lng,
-        observation_notes=contribution_in.observation_notes,
+        observation_notes=notes,
         status="pending"
     )
     db.add(contribution)

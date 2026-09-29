@@ -14,7 +14,7 @@ async def ask_companion(
         answer = await CompanionService.ask_question(request.question, request.species_context)
         return CompanionResponse(answer=answer)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail=f"Companion failed: {str(e)}")
 
 @router.post("/celebrate", response_model=CompanionResponse)
 async def celebrate_discovery(
@@ -25,4 +25,4 @@ async def celebrate_discovery(
         answer = await CompanionService.generate_celebration(request.species_name)
         return CompanionResponse(answer=answer)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=502, detail=f"Companion failed: {str(e)}")

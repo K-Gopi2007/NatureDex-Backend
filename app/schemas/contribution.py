@@ -4,10 +4,12 @@ from datetime import datetime
 
 class ContributionCreate(BaseModel):
     species_id: Optional[int] = None
+    species_name: Optional[str] = None
     image_url: Optional[str] = None
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
     observation_notes: Optional[str] = None
+    observation_date: Optional[str] = None
 
 class ContributionResponse(BaseModel):
     id: int
