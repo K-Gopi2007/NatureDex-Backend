@@ -18,26 +18,37 @@ class IdentifyService:
         
         try:
             logger.info(f"Sending image to Gemini Vision (size: {len(image_bytes)} bytes, type: {mime_type})")
-            
-            response = await client.aio.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=[
-                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-                    "Identify the biological species in this image. The image may be blurry, partial, or contain multiple species. Try your best to identify the primary subject even if conditions are poor. Provide its common name, scientific name, category (e.g. Plant, Animal, Fungi, Insect, Bird), and a confidence score between 0.0 and 1.0. Also provide typical diet, size, lifespan, habitat, distribution, and conservation status if known. If you detect other distinct species in the background or alongside the primary subject, list them in the 'secondary_species' array."
+            import base64
+            image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+
+            interaction = await client.aio.interactions.create(
+                model=getattr(settings, 'GEMINI_MODEL', 'gemini-3.8-flash'),
+                input=[
+                    {
+                        "type": "image",
+                        "mime_type": mime_type,
+                        "data": image_b64,
+                    },
+                    {
+                        "type": "text",
+                        "text": "Identify the biological species in this image. The image may be blurry, partial, or contain multiple species. Try your best to identify the primary subject even if conditions are poor. Provide its common name, scientific name, category (e.g. Plant, Animal, Fungi, Insect, Bird), and a confidence score between 0.0 and 1.0. Also provide typical diet, size, lifespan, habitat, distribution, and conservation status if known. If you detect other distinct species in the background or alongside the primary subject, list them in the 'secondary_species' array. Output ONLY valid JSON matching the requested fields."
+                    }
                 ],
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=IdentifyResult,
-                    temperature=0.2,
-                )
+                response_format=[
+                    {
+                        "type": "text",
+                        "mime_type": "application/json",
+                        "schema": IdentifyResult.model_json_schema(),
+                    }
+                ]
             )
             
             logger.info("Received response from Gemini Vision.")
             
-            if not response.text:
+            if not interaction.output_text:
                  raise ValueError("Empty response from Gemini API")
                  
-            data = json.loads(response.text)
+            data = json.loads(interaction.output_text)
             
             # Enrich the result
             try:

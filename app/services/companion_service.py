@@ -27,7 +27,7 @@ class CompanionService:
             
         try:
             response = await client.aio.models.generate_content(
-                model='gemini-2.5-flash',
+                model=getattr(settings, 'GEMINI_MODEL', 'gemini-3.8-flash'),
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
@@ -57,7 +57,7 @@ class CompanionService:
             
         try:
             response = await client.aio.models.generate_content(
-                model='gemini-2.5-flash',
+                model=getattr(settings, 'GEMINI_MODEL', 'gemini-3.8-flash'),
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
