@@ -26,16 +26,19 @@ class CompanionService:
             prompt = f"Explorer's Question: {question}"
             
         try:
-            response = await client.aio.models.generate_content(
+            interaction = await client.aio.interactions.create(
                 model=getattr(settings, 'GEMINI_MODEL', 'gemini-3.8-flash'),
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.7,
-                )
+                input=[
+                    {
+                        "type": "text",
+                        "text": f"System Instruction: {system_instruction}\n\n{prompt}"
+                    }
+                ]
             )
             
-            return response.text
+            if not interaction.output_text:
+                raise ValueError("Empty response from Gemini API")
+            return interaction.output_text
         except Exception as e:
             logger.error(f"Error during Companion generation: {str(e)}")
             raise ValueError(f"Companion failed to answer: {str(e)}")
@@ -56,16 +59,19 @@ class CompanionService:
         prompt = f"The explorer just discovered: {species_name}."
             
         try:
-            response = await client.aio.models.generate_content(
+            interaction = await client.aio.interactions.create(
                 model=getattr(settings, 'GEMINI_MODEL', 'gemini-3.8-flash'),
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    temperature=0.8,
-                )
+                input=[
+                    {
+                        "type": "text",
+                        "text": f"System Instruction: {system_instruction}\n\n{prompt}"
+                    }
+                ]
             )
             
-            return response.text
+            if not interaction.output_text:
+                raise ValueError("Empty response from Gemini API")
+            return interaction.output_text
         except Exception as e:
             logger.error(f"Error during Companion celebration: {str(e)}")
             return f"Wow! Incredible find! The {species_name} is a fantastic addition to your NatureDex!"

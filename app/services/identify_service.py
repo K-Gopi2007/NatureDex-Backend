@@ -37,8 +37,7 @@ class IdentifyService:
                 response_format=[
                     {
                         "type": "text",
-                        "mime_type": "application/json",
-                        "schema": IdentifyResult.model_json_schema(),
+                        "mime_type": "application/json"
                     }
                 ]
             )

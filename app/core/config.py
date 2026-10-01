@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     # Gemini
     GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-3.8-flash"
 
     # JWT Authentication
     SECRET_KEY: str = "supersecretkey_please_change_in_production"
